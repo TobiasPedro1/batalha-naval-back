@@ -130,7 +130,12 @@ builder.Services.AddHealthChecks()
         builder.Configuration.GetConnectionString("DefaultConnection"),
         name: "postgresql",
         failureStatus: HealthStatus.Unhealthy,
-        tags: new[] { "readiness", "db" });
+        tags: new[] { "readiness", "db" })
+    .AddRedis(
+        builder.Configuration.GetConnectionString("Redis")!,
+        "redis",
+        HealthStatus.Unhealthy,
+        new[] { "readiness", "cache" });
 
 var app = builder.Build();
 
