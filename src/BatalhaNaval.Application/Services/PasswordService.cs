@@ -1,5 +1,4 @@
 using BatalhaNaval.Application.Interfaces;
-using BCrypt.Net;
 
 namespace BatalhaNaval.Application.Services;
 

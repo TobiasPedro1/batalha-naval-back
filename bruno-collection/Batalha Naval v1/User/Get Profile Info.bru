@@ -1,0 +1,20 @@
+meta {
+  name: Get Profile Info
+  type: http
+  seq: 6
+}
+
+get {
+  url: {{baseUrl}}/Users/profile
+  body: none
+  auth: inherit
+}
+
+headers {
+  Authorization: Bearer YOUR_SECRET_TOKEN
+}
+
+settings {
+  encodeUrl: false
+  timeout: 0
+}

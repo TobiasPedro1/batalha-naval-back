@@ -1,5 +1,7 @@
+using System.Security.Claims;
 using BatalhaNaval.Application.DTOs;
 using BatalhaNaval.Application.Interfaces;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace BatalhaNaval.API.Controllers;
@@ -9,11 +11,13 @@ namespace BatalhaNaval.API.Controllers;
 [Produces("application/json")]
 public class UsersController : ControllerBase
 {
+    private readonly ICacheService _cacheService;
     private readonly IUserService _userService;
 
-    public UsersController(IUserService userService)
+    public UsersController(IUserService userService, ICacheService cacheService)
     {
         _userService = userService;
+        _cacheService = cacheService;
     }
 
     /// <summary>
@@ -42,5 +46,49 @@ public class UsersController : ControllerBase
         {
             return StatusCode(500, new { message = "Erro interno ao criar usuário." });
         }
+    }
+
+    /// <summary>
+    ///     Obtém o perfil atualizado do usuário logado.
+    /// </summary>
+    /// <remarks>
+    ///     Obtém o perfil do usuário autenticado, incluindo pontos de ranking, vitórias, derrotas e outras informações
+    ///     relevantes.
+    /// </remarks>
+    /// <response code="200">Perfil obtido com sucesso.</response>
+    /// <response code="401">Usuário não autenticado.</response>
+    /// <response code="404">Usuário não encontrado.</response>
+    [HttpGet("profile")]
+    [Authorize]
+    [ProducesResponseType(typeof(UserProfileDTO), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    public async Task<IActionResult> GetProfile()
+    {
+        var userIdString = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+
+        if (!Guid.TryParse(userIdString, out var userId))
+            return Unauthorized();
+
+        var cacheKey = $"profile:{userId}";
+        var cachedProfile = await _cacheService.GetAsync<UserProfileDTO>(cacheKey);
+
+        if (cachedProfile != null)
+            return Ok(cachedProfile);
+
+        var user = await _userService.GetByIdAsync(userId);
+        if (user == null) return NotFound("Usuário não encontrado.");
+
+        // TODO Verificar se pode adicionar Medalhas ao cache
+        var profileDto = new UserProfileDTO
+        {
+            RankPoints = user.Profile.RankPoints,
+            Wins = user.Profile.Wins,
+            Losses = user.Profile.Losses
+        };
+
+        await _cacheService.SetAsync(cacheKey, profileDto, TimeSpan.FromMinutes(10));
+
+        return Ok(profileDto);
     }
 }

@@ -1,20 +1,13 @@
 meta {
-  name: Login
+  name: Logout
   type: http
   seq: 2
 }
 
 post {
-  url: {{baseUrl}}/auth/login
-  body: json
-  auth: none
-}
-
-body:json {
-  {
-    "username": "teste01",
-    "password": "1234567890"
-  }
+  url: {{baseUrl}}/auth/logout
+  body: none
+  auth: inherit
 }
 
 script:post-response {

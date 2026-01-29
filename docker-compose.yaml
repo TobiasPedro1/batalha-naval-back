@@ -9,9 +9,35 @@ services:
       - "5432:5432"
     volumes:
        - ./docker-database-initial.sql:/docker-entrypoint-initdb.d/docker-database-initial.sql
-    restart: on-failure
+    restart: unless-stopped
     networks:
       - app-private-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  redis:
+    image: redis:8.4.0
+    container_name: rediscache
+    command: redis-server --appendonly yes --requirepass "RedisPassword123!" 
+    volumes:
+      - redis-data:/data
+    restart: always
+    ports:
+      - "6379:6379"
+    networks:
+      - app-private-network
+    healthcheck:
+      test: ["CMD", "redis-cli", "-a", "RedisPassword123!", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+
+volumes:
+  redis-data:
+  postgres-data:
 
 networks:
   app-private-network:

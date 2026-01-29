@@ -7,8 +7,8 @@ namespace BatalhaNaval.Application.Services;
 
 public class UserService : IUserService
 {
-    private readonly IUserRepository _userRepository;
     private readonly IPasswordService _passwordService;
+    private readonly IUserRepository _userRepository;
 
     public UserService(IUserRepository userRepository, IPasswordService passwordService)
     {
@@ -40,5 +40,14 @@ public class UserService : IUserService
         var createdUser = await _userRepository.AddAsync(newUser);
 
         return new UserResponseDto(createdUser.Id, createdUser.Username, createdUser.CreatedAt);
+    }
+
+    public async Task<User> GetByIdAsync(Guid id)
+    {
+        var user = await _userRepository.GetByIdAsync(id);
+        if (user == null)
+            return null;
+
+        return user;
     }
 }
