@@ -37,7 +37,11 @@ CREATE TABLE matches (
 
     -- Tabuleiros completos como JSON
     player1_board_json JSONB DEFAULT '{}'::jsonb,
-    player2_board_json JSONB DEFAULT '{}'::jsonb
+    player2_board_json JSONB DEFAULT '{}'::jsonb,
+    
+    -- Controler dos Hits
+    player1_hits INTEGER NOT NULL DEFAULT 0,
+    player2_hits INTEGER NOT NULL DEFAULT 0
 );
 
 CREATE TABLE medals (

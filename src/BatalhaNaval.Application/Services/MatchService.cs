@@ -15,6 +15,9 @@ public class MatchService : IMatchService
     private readonly IMatchRepository _repository;
     private readonly IUserRepository _userRepository;
 
+	private const int POINTS_PER_WIN = 100;
+	private const int POINTS_PER_HIT = 10;
+
     public MatchService(IMatchRepository repository, IUserRepository userRepository, ICacheService cacheService)
     {
         _repository = repository;
@@ -251,13 +254,15 @@ public class MatchService : IMatchService
 
     private async Task ProcessEndGameAsync(Match match)
     {
-        if (match.WinnerId != null)
+        if (match.WinnerId.HasValue)
         {
             var winnerProfile = await _repository.GetUserProfileAsync(match.WinnerId.Value);
             if (winnerProfile != null)
             {
-                // Pontuação simples: 100 pts por vitória
-                winnerProfile.AddWin(100);
+                int hits = match.WinnerId == match.Player1Id ? match.Player1Hits : match.Player2Hits;
+            	int totalWinPoints = POINTS_PER_WIN + (hits * POINTS_PER_HIT);
+            
+           		 winnerProfile.AddWin(totalWinPoints);
 
                 // Lógica de Medalhas poderia vir aqui (Ex: checar se venceu sem perder navios)
                 if (match.WinnerId == match.Player1Id && !match.Player1Board.Ships.Any(s => s.IsSunk))
@@ -274,11 +279,18 @@ public class MatchService : IMatchService
                 var loserProfile = await _repository.GetUserProfileAsync(loserId.Value);
                 if (loserProfile != null)
                 {
-                    loserProfile.AddLoss();
+                    int hits = loserId == match.Player1Id ? match.Player1Hits : match.Player2Hits;
+            
+            		loserProfile.Losses++;
+            		loserProfile.CurrentStreak = 0;
+            		loserProfile.RankPoints += (hits * POINTS_PER_HIT);
+            		loserProfile.UpdatedAt = DateTime.UtcNow;
                     await _repository.UpdateUserProfileAsync(loserProfile);
                 }
             }
         }
+		//invalida o cache do ranking para que a próxima consulta pegue dados novos
+		await _cacheService.RemoveAsync("global_ranking");
     }
 
     private void SetupAiBoard(Board aiBoard)

@@ -9,6 +9,8 @@ public class Match
     // Controle de prontidão
     private bool _player1Ready;
     private bool _player2Ready; // Se for IA, já começa true ou logicamente tratado
+    public int Player1Hits { get; private set; }
+    public int Player2Hits { get; private set; }
 
     public Match(Guid player1Id, GameMode mode, Difficulty? aiDifficulty = null, Guid? player2Id = null)
     {
@@ -103,6 +105,11 @@ public class Match
         // Se acertou navio (CellState.Hit), mantém a vez (Regra: "Caso acerte... pode jogar outra bomba")
         var cellState = targetBoard.Cells[x][y];
         var hitShip = cellState == CellState.Hit;
+
+		if (hitShip) {
+        if (playerId == Player1Id) Player1Hits++;
+        else Player2Hits++;
+    	}
 
         if (targetBoard.AllShipsSunk())
             FinishGame(playerId);
