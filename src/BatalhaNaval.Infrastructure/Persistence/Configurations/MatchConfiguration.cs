@@ -64,5 +64,13 @@ public class MatchConfiguration : IEntityTypeConfiguration<Match>
             .Metadata.SetValueComparer(boardComparer);
 
         builder.Ignore(m => m.IsFinished);
+        
+        builder.Property(m => m.Player1Hits)
+            .HasColumnName("player1_hits")
+            .IsRequired();
+
+        builder.Property(m => m.Player2Hits)
+            .HasColumnName("player2_hits")
+            .IsRequired();
     }
 }
